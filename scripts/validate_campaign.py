@@ -12,7 +12,7 @@ from typing import Any
 
 import hashlib
 from PIL import Image
-from optimize_image import validate as validate_webp
+from optimize_image import validate as validate_webp, inspect_metadata
 from update_manifest import IDENTITIES, load_manifest
 from scrape_product import normalize_url, is_product_path
 from urllib.parse import urlparse
@@ -103,14 +103,15 @@ def digest(path):
 def validate_transport(path):
     if path.stat().st_size > 750 * 1024:
         raise ValueError("Transport image exceeds 750 KiB")
+    metadata = inspect_metadata(path)
+    if not metadata['metadata_removed']:
+        raise ValueError('Transport still has embedded metadata')
     with Image.open(path) as im:
         im.verify()
     with Image.open(path) as im:
         if im.format != "JPEG" or im.width != im.height or im.width < 960:
             raise ValueError("Transport must be square JPEG, at least 960 x 960")
-        if im.getexif() or any(k in im.info for k in ("exif", "icc_profile", "xmp", "comment")):
-            raise ValueError("Transport still has embedded metadata")
-        return {"format":"JPEG", "size":list(im.size), "bytes":path.stat().st_size}
+        return {"format":"JPEG", "size":list(im.size), "bytes":path.stat().st_size, "metadata":metadata}
 
 
 def validate_campaign(manifest):

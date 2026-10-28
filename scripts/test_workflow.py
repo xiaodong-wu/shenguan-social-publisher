@@ -9,9 +9,9 @@ from unittest.mock import patch
 from PIL import Image
 import scrape_product as scrape
 from content_plan import build_content_plan
-from optimize_image import strip_metadata, compress, validate, create_transport_jpeg
+from optimize_image import strip_metadata, compress, validate, create_transport_jpeg, inspect_metadata
 from update_manifest import load_manifest, write_manifest, update_manifest, validate_post_url, SHEET_ID, SHEET_URL, IDENTITIES
-from validate_campaign import validate_campaign, digest
+from validate_campaign import validate_campaign, digest, validate_facebook, validate_linkedin, validate_transport
 from validate_completion import expected_row, validate_completion
 
 URL='https://www.shenguanwatch.com/sgw-au6952.html'
@@ -181,5 +181,28 @@ Contact Shenguan Watch with your brand requirements and sourcing questions. Requ
         clean=strip_metadata(image);self.assertFalse(clean.info)
         enc,_,_=compress(clean,750*1024,(960,960));p=self.root/'image.webp';p.write_bytes(enc)
         self.assertTrue(validate(p,'social',750*1024)['metadata_removed'])
+
+    def test_original_social_copy_format_is_required(self):
+        path,m=self.campaign()
+        fb=Path(m['artifacts']['facebook_copy']).read_text()
+        li=Path(m['artifacts']['linkedin_copy']).read_text()
+        self.assertEqual(validate_facebook(fb,URL)['feature_lines'],4)
+        self.assertEqual(validate_linkedin(li,URL)['feature_bullets'],4)
+        with self.assertRaisesRegex(ValueError,'emoji feature lines'):
+            validate_facebook(fb.replace('⌚ ','',1),URL)
+        with self.assertRaisesRegex(ValueError,'hashtags'):
+            validate_facebook(fb.replace('#Watch ','',1),URL)
+        with self.assertRaisesRegex(ValueError,'feature bullets'):
+            validate_linkedin(li.replace('- ',''),URL)
+
+    def test_unknown_jpeg_application_metadata_is_rejected(self):
+        p=self.root/'upload.jpg'
+        create_transport_jpeg(strip_metadata(Image.new('RGB',(1000,1000))),p)
+        self.assertTrue(inspect_metadata(p)['metadata_removed'])
+        raw=p.read_bytes();payload=b'non-image application fixture'
+        p.write_bytes(raw[:2]+b'\xff\xeb'+(len(payload)+2).to_bytes(2,'big')+payload+raw[2:])
+        self.assertIn('APP11',inspect_metadata(p)['embedded_metadata'])
+        with self.assertRaisesRegex(ValueError,'metadata'):
+            validate_transport(p)
 
 if __name__=='__main__': unittest.main(verbosity=2)
