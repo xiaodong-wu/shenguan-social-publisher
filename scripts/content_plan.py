@@ -18,5 +18,5 @@ def build_content_plan(product):
         'source_url': product['canonical_url'],
         'related_topics': product.get('use_cases', [])[:4],
         'buyer_intent': 'product evaluation and sourcing inquiry',
-        'instructions': 'Preserve option qualifiers. Trace all claims to product evidence; do not infer final configuration or diving depth.',
+        'instructions': 'Preserve option qualifiers. Trace all claims to product evidence; do not infer final configuration or diving depth. Keep source_url for internal evidence only; social copy must not contain website links, shortened URLs or bare domains.',
     }

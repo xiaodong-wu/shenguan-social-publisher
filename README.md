@@ -8,6 +8,7 @@ Codex skill for Shenguan Watch: source one watch from the official catalog, crea
 - Facebook：https://www.facebook.com/shenguanwatch/ （Page ID `61582598850100`）
 - LinkedIn：https://www.linkedin.com/company/110553027/admin/dashboard/
 - 顺序：Facebook → LinkedIn → Google Sheets。
+- Facebook 和 LinkedIn 文案不含网站链接、短链接或裸域名；产品 URL 仅用于内部来源核验。
 - 不包含站内文章、网站写入 API 或网站密钥。记录表的站内链接列使用 `不适用（仅社媒）`。
 
 ## 安装与使用
@@ -42,6 +43,6 @@ python3 scripts/test_workflow.py
 - [记录规范](references/reporting.md)：固定五列结构、精确链接去重和回读。
 - `scripts/`：采集、图片优化、素材校验、状态更新、完成校验及离线行为测试。
 
-22 项离线测试覆盖目录分页、源事实边界、选项兼容与冲突、身份限制、渠道顺序、永久链接格式、dry-run 限制、候选预算、失败恢复、表格唯一性、原文案格式和导出图片元数据。离线测试不替代每次执行时的登录、公开帖子和表格核验。
+24 项离线测试覆盖目录分页、源事实边界、选项兼容与冲突、身份限制、渠道顺序、永久链接格式、dry-run 限制、候选预算、失败恢复、表格唯一性、无网站链接文案格式和导出图片元数据。离线测试不替代每次执行时的登录、公开帖子和表格核验。
 
 本仓库不包含账号凭据、浏览器状态、运行素材或发布历史。周期调度由 Codex Automations 单独配置，安装技能不会自动创建定时任务。

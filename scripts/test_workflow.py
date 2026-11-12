@@ -55,7 +55,7 @@ Compare the available configuration options against your brand requirements. The
 
 Contact Shenguan Watch to discuss your requirements and request product information.
 
-'''+URL+'\n\n#Watch #AutomaticWatch #WatchDesign #WatchBrand #Sourcing #Wholesale #Wristwatch #WatchManufacturer'
+#Watch #AutomaticWatch #WatchDesign #WatchBrand #Sourcing #Wholesale #Wristwatch #WatchManufacturer'''
         li='''Selecting a watch for a brand assortment starts with a clear specification. Buyers need to distinguish between available options and the final configuration agreed for an order. That distinction helps structure useful conversations with a supplier.
 
 - The product is presented as an automatic watch.
@@ -67,7 +67,7 @@ The SGW-AU6952 product information also describes OEM and ODM customization. Pur
 
 Contact Shenguan Watch with your brand requirements and sourcing questions. Request further product information and confirm the intended specification before making a purchasing decision.
 
-'''+URL+'\n\n#Watch #WatchSourcing #PrivateLabel'
+#Watch #WatchSourcing #PrivateLabel'''
         Path(m['artifacts']['facebook_copy']).write_text(fb)
         Path(m['artifacts']['linkedin_copy']).write_text(li)
         im=Image.new('RGB',(1000,1000),'#c39988');enc,final,_=compress(strip_metadata(im),750*1024,(960,960))
@@ -134,6 +134,32 @@ Contact Shenguan Watch with your brand requirements and sourcing questions. Requ
         path,m=self.campaign();Path(m['artifacts']['facebook_copy']).write_text('Changed unreviewed text')
         with self.assertRaises(ValueError): update_manifest(path,'facebook','pending',submission_started=True)
         self.assertNotIn('publishing_started_at',load_manifest(path))
+    def test_link_free_copy_keeps_internal_source_urls(self):
+        path,m=self.campaign()
+        self.assertEqual(validate_campaign(m)['status'],'validated')
+        for key in ('facebook_copy','linkedin_copy'):
+            self.assertNotIn(URL,Path(m['artifacts'][key]).read_text())
+        self.assertEqual(m['product']['canonical_url'],URL)
+        self.assertEqual(json.loads(Path(m['artifacts']['content_plan']).read_text())['source_url'],URL)
+        self.assertEqual(json.loads(Path(m['artifacts']['review']).read_text())['product_url'],URL)
+    def test_website_links_block_reviewed_copy_before_submission(self):
+        path,m=self.campaign()
+        originals={key:Path(m['artifacts'][key]).read_text() for key in ('facebook_copy','linkedin_copy')}
+        links=(URL,'http://example.com/watch','HTTPS://EXAMPLE.COM/watch',
+               'https://lnkd.in/example','www.shenguanwatch.com','shenguanwatch.com',
+               'example.co.uk/watch','[Product](https://example.com/watch)')
+        review_path=Path(m['artifacts']['review'])
+        for key in originals:
+            for link in links:
+                with self.subTest(channel=key,link=link):
+                    for name,original in originals.items():
+                        Path(m['artifacts'][name]).write_text(original+('\n'+link if name==key else ''))
+                    review=json.loads(review_path.read_text())
+                    review['sha256'].update({name:digest(m['artifacts'][name]) for name in originals})
+                    write_manifest(review_path,review)
+                    with self.assertRaisesRegex(ValueError,'must not contain website links'):
+                        update_manifest(path,'facebook','pending',submission_started=True)
+                    self.assertNotIn('publishing_started_at',load_manifest(path))
     def test_dry_run_cannot_publish(self):
         path,m=self.campaign('dry-run')
         with self.assertRaises(ValueError): update_manifest(path,'facebook','pending',submission_started=True)
