@@ -15,7 +15,7 @@ Codex skill for Shenguan Watch: source one watch from the official catalog, crea
 
 将本仓库复制到 `~/.codex/skills/shenguan-social-publisher`，或用 Codex skill installer 从本仓库安装。
 
-需要 Python 3.9+、Pillow、Codex 内置 imagegen、可访问且已登录目标账号的浏览器，以及既有发布记录表的写入权限。
+需要 Python 3.9+、Pillow、Codex 内置 imagegen、已通过浏览器插件连接且已登录目标账号的 Chrome，以及既有发布记录表的写入权限。
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -28,7 +28,7 @@ python3 scripts/test_workflow.py
 - `使用 $shenguan-social-publisher 对指定产品 URL 运行一次`
 - `使用 $shenguan-social-publisher dry-run`
 
-执行 live 发布前会检查两个平台的实时身份和权限。dry-run 只生成本地素材，不发帖、不写在线表格。脚本默认 dry-run；单独运行采集器不会自动发布。图片生成和实际发布由 Codex 的授权工具完成。
+执行 live 发布前会检查两个平台的实时身份和权限。Facebook 和 LinkedIn 的预检、上传、发布及公开帖子核验均通过 `cua_repl` 的 Chrome 插件连接完成；插件不可用时停止，不改用其他发布通道。dry-run 只生成本地素材，不发帖、不写在线表格。脚本默认 dry-run；单独运行采集器不会自动发布。图片生成和表格记录方式保持不变。
 
 ## 运行与恢复
 
