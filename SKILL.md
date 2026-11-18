@@ -34,11 +34,10 @@ Facebook 数字 ID 已于 2026-10-20 从该公开主页的移动端 profile 元�
 
 ## 执行流程
 
-1. **预检。** 读取 [发布流程](references/publishing.md)。使用浏览器插件连接已登录的
-   Chrome，通过当前 `cua_repl` 工具完成社媒身份预检及后续发布、核验。读取工具初始化
-   文档，确认使用插件连接，不调用过时浏览器接口。确认两个固定账号均有发帖权限；Facebook 可执行一次已明确
-   指向目标主页的两步身份切换。登录、MFA、验证码、身份不明或权限缺失时停止，
-   在生成素材前报告阻塞。dry-run 不要求社媒登录。
+1. **预检。** live 运行通过 `cua_repl` 的 Chrome 插件连接操作。按[发布流程](references/publishing.md)
+   识别当前连接、处理重连，并核验两个固定账号的发布身份和权限。Facebook 可执行一次明确
+   指向目标主页的两步身份切换。登录、MFA、验证码、身份不明或权限缺失时，在生成素材前停止并报告。
+   dry-run 不要求社媒登录。
 2. **选品。** 读取 [选品规则](references/product-selection.md)。执行
    `scripts/scrape_product.py --mode live --output-root RUNS_ROOT`；dry-run 改用
    `--mode dry-run`。默认输出当前工作目录的 `campaign-runs/`，不得存入技能目录。
