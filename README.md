@@ -28,7 +28,9 @@ python3 scripts/test_workflow.py
 - `使用 $shenguan-social-publisher 对指定产品 URL 运行一次`
 - `使用 $shenguan-social-publisher dry-run`
 
-执行 live 发布前会检查两个平台的实时身份和权限。Facebook 和 LinkedIn 的预检、上传、发布及公开帖子核验均通过 `cua_repl` 的 Chrome 插件连接完成；插件不可用时停止，不改用其他发布通道。dry-run 只生成本地素材，不发帖、不写在线表格。脚本默认 dry-run；单独运行采集器不会自动发布。图片生成和表格记录方式保持不变。
+执行 live 新任务前会检查两个平台的实时身份和权限，续跑核验待发布的平台。Facebook 和 LinkedIn 的预检、上传、发布及公开帖子核验均通过 Chrome 插件完成。工具发现同时检查名称和用途说明，支持新版 `node_repl` 和仍可用的旧版入口。初始浏览器列表缺少 Chrome 时主动选择 Chrome，当前会话标签页为空时检查用户已打开的标签页，并确认连接类型为 `extension`。连接失败按当前插件文档诊断，具体步骤见[发布规范](references/publishing.md)。
+
+dry-run 只生成本地素材，不发帖、不写在线表格。脚本默认 dry-run；单独运行采集器不会自动发布。图片生成和表格记录方式保持不变。
 
 ## 运行与恢复
 

@@ -34,8 +34,9 @@ Facebook 数字 ID 已于 2026-10-20 从该公开主页的移动端 profile 元�
 
 ## 执行流程
 
-1. **预检。** live 运行通过 `cua_repl` 的 Chrome 插件连接操作。按[发布流程](references/publishing.md)
-   识别当前连接、处理重连，并核验两个固定账号的发布身份和权限。Facebook 可执行一次明确
+1. **预检。** live 运行通过当前可用的 Chrome 插件工具操作。按[发布流程](references/publishing.md)
+   发现新版 `node_repl` 或可用的旧版入口，实际连接并确认 `extension` 类型。
+   新任务核验两个固定账号，续跑核验尚需发布的账号身份和权限。Facebook 可执行一次明确
    指向目标主页的两步身份切换。登录、MFA、验证码、身份不明或权限缺失时，在生成素材前停止并报告。
    dry-run 不要求社媒登录。
 2. **选品。** 读取 [选品规则](references/product-selection.md)。执行

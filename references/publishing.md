@@ -3,20 +3,61 @@
 ## 工具和身份预检
 
 Facebook 和 LinkedIn 的身份核验、上传、预览、提交及公开帖子核验都在已登录的 Chrome 中通过插件完成。
-按当前 `cua_repl` 文档初始化。用 `cua.getState()` 查看本对话的浏览器；用户提供了 Chrome
-标签页引用时，按工具文档打开该引用。根据返回的浏览器名称与 `type: extension` 确认连接。
 
-- 看得到 Chrome 插件，即使标签页列表为空，也可在该连接中打开下列固定主页，继续核验账号。
-  使用本次返回的浏览器 ID；它可能与上次不同。已取得连接后遇到标签页失效，在同一连接重新打开目标页。
-- 列表为空或只有 `iab`、`mcpapps` 等其他类型时，按文档用 `cua.createBrowserTab` 指定
-  `chrome` 尝试打开固定 Facebook 主页一次。成功后核对连接类型并复用该页。若仍不可用，
-  记录检查时间、可见浏览器类型及工具错误到本批次。说明“当前 Codex 对话无法访问 Chrome 插件”。
-  用户已确认连接时，请其提供插件显示的状态文字，或在支持时将目标 Chrome 标签页引用发到本对话。
-- 收到针对该阻塞的“重试”或“已连接”时，读取原 manifest，重新探测本次连接。预检通过后从首个
-  未完成步骤继续。若已有提交标记，先按下文核对平台结果。禁止用独立 CDP/Playwright、
-  社媒 API 或其他浏览器代发。
+### 发现当前工具
 
-在任何生成前打开并记录：
+同时检查当前工具的名称与用途说明，寻找 `node_repl`、`cua_repl`、Chrome 或浏览器控制能力。
+例如 `mcp__node_repl__js` 的说明包含通过 Chrome 插件控制浏览器，即使工具名没有 Chrome。
+优先采用当前 Chrome 插件提供的入口和文档。旧 `cua_repl` 缺失时继续检查新版入口。
+只调用当前已暴露的工具，已撤下的工具名称仅作历史记录。
+
+新版入口通过 `node_repl` 导入官方 Chrome 插件的 `scripts/browser-client.mjs`，调用
+`setupBrowserRuntime()` 取得 `agent`。客户端的绝对路径从当前启用的插件包确定，版本号随安装变化。
+若 Chrome 技能未列出或其 `skills/` 为空，在已安装的官方 Chrome 插件目录中定位客户端和
+`docs/api.json`、`docs/bootstrap-troubleshooting.md`、`docs/chrome-troubleshooting.md`。
+以包内公开 API 文档和运行时文档为准，保留已有的 `agent` 与 Chrome 句柄供后续调用复用。
+
+### 连接 Chrome 与选择标签页
+
+使用新版入口时按以下步骤处理。
+
+1. 用户提供了插件标签页引用时，按当前插件的标签页认领文档匹配浏览器实例和标签页。
+   该引用失效时报告具体标签页状态，等待用户更新引用。
+2. 普通 URL 或未指定标签页时，优先复用已有 Chrome 句柄。首次选择时读取
+   `await agent.browsers.list()`，再用 `await agent.browsers.get('chrome')` 取得 `chrome` 句柄。
+   初始列表为空或仅有 `iab`、`mcpapps` 时也执行这次选择调用，它可以激活尚未列出的 Chrome 连接。
+3. 读取 `await chrome.documentation()`，确认选中的是 Chrome 且类型为 `extension`，
+   按文档命名本次会话，例如 `await chrome.nameSession('⌚ 晟冠社媒发布')`。
+4. `chrome.tabs.list()` 只列出当前会话控制的标签页。已有目标页面时复用该页。
+   返回 `[]` 或列表中缺少目标页面时，继续调用 `await chrome.user.openTabs()`，
+   按当前返回的 URL 和标题查找目标公司页面。
+   使用返回的原始标签页对象调用 `chrome.user.claimTab(tabInfo)`。
+5. 普通 URL 没有对应的已打开标签页时，用同一 Chrome 连接的 `chrome.tabs.new()` 创建标签页，
+   再 `tab.goto(目标URL)`。先读取当前页面，已有草稿时检查其内容和阶段后继续。
+   标签页失效时在同一连接重新获取或打开目标页面，保留浏览器句柄和本地提交状态。
+
+旧版入口仅在当前实际可调用且已有对应文档时使用。按该版本文档初始化 `cua`、读取
+`cua.getState()`，必要时用 `cua.createBrowserTab` 指定 `chrome` 打开本次待发布平台的固定页面，
+同样以实际返回的 `extension` 类型确认连接。一个运行时已经初始化后，按其排错文档恢复连接。
+
+### 连接失败与续跑
+
+初始化或连接调用失败时，读取当前插件的排错文档，执行其有界重试与只读诊断。
+区分当前对话缺少可调用入口、Chrome 扩展通信失败、目标标签页失效和网站登录/权限问题。
+只有完成入口发现与适用的连接尝试后才能报告连接阻塞。用户表示其他对话可用时，
+重新检查本对话的工具名称和说明，并记录本次实际调用结果。
+
+将检查时间、使用的工具、返回的浏览器类型、失败操作及错误保存到当前批次的证据和恢复历史。
+需要用户处理时只说明实际阻塞与对应操作。用户主动停止浏览器控制时，等待其明确恢复。
+禁止用独立 CDP/Playwright、社媒 API 或其他浏览器代发。
+
+收到“重试”或“已连接”时读取原 manifest，使用当前工具重新探测。
+仅补表时依据已核验的两条永久链接执行记录规范。仅续跑 LinkedIn 时，核验该公司账号并
+跳过已发布的 Facebook。已有提交标记时先按下文核查平台结果，再决定能否提交。
+
+### 账号预检
+
+新任务在生成素材前核验两个账号。续跑只核验本次尚需发布的平台，使用以下固定目标。
 
 - Facebook：`https://www.facebook.com/shenguanwatch/`，数字 ID `61582598850100`
 - LinkedIn：`https://www.linkedin.com/company/110553027/admin/dashboard/`
@@ -38,7 +79,8 @@ Facebook 和 LinkedIn 的身份核验、上传、预览、提交及公开帖子�
 
 ## 最终发布前
 
-两个平台都要先确认具备权限；全部素材通过 `validate_campaign.py` 后才开始第一条。
+新任务先确认两个平台具备权限，续跑先确认待发布平台具备权限。
+全部素材通过 `validate_campaign.py` 后才开始本次提交。
 各平台提交前再次确认身份，粘贴完整对应文案，上传 `social-upload.jpg`，检查预览。
 如果当前模板或上传工具不能接受本地图片，记录阻塞，不擅自发布无图帖子。
 
